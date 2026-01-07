@@ -20,6 +20,7 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
     finishTime: "",
     clientMiles: "",
     commuteMiles: "",
+    worked: true,
   });
 
   const [calculatedHours, setCalculatedHours] = useState(0);
@@ -33,6 +34,7 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
         finishTime: editingEntry.finishTime,
         clientMiles: editingEntry.clientMiles.toString(),
         commuteMiles: editingEntry.commuteMiles.toString(),
+        worked: editingEntry.worked !== undefined ? editingEntry.worked : true,
       });
     } else {
       setFormData({
@@ -42,6 +44,7 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
         finishTime: "",
         clientMiles: "",
         commuteMiles: "",
+        worked: true,
       });
     }
   }, [editingEntry, open]);
@@ -66,6 +69,7 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
       totalHours: calculatedHours,
       clientMiles: parseFloat(formData.clientMiles) || 0,
       commuteMiles: parseFloat(formData.commuteMiles) || 0,
+      worked: formData.worked,
     };
 
     onSave(entry);
@@ -76,6 +80,7 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
       finishTime: "",
       clientMiles: "",
       commuteMiles: "",
+      worked: true,
     });
   };
 
