@@ -20,21 +20,28 @@ export const exportToPDF = (entries) => {
     entry.totalHours.toFixed(2),
     entry.clientMiles.toFixed(1),
     entry.commuteMiles.toFixed(1),
+    entry.worked !== false ? 'Yes' : 'No',
   ]);
 
   const totals = entries.reduce(
-    (acc, entry) => ({
-      totalHours: acc.totalHours + entry.totalHours,
-      clientMiles: acc.clientMiles + entry.clientMiles,
-      commuteMiles: acc.commuteMiles + entry.commuteMiles,
-    }),
+    (acc, entry) => {
+      // Only include entries where worked is true
+      if (entry.worked !== false) {
+        return {
+          totalHours: acc.totalHours + entry.totalHours,
+          clientMiles: acc.clientMiles + entry.clientMiles,
+          commuteMiles: acc.commuteMiles + entry.commuteMiles,
+        };
+      }
+      return acc;
+    },
     { totalHours: 0, clientMiles: 0, commuteMiles: 0 }
   );
 
   doc.autoTable({
-    head: [['Date', 'Client', 'Start Time', 'Finish Time', 'Total Hours', 'Client Miles', 'Commute Miles']],
+    head: [['Date', 'Client', 'Start Time', 'Finish Time', 'Total Hours', 'Client Miles', 'Commute Miles', 'Worked']],
     body: tableData,
-    foot: [['', '', '', 'Totals:', totals.totalHours.toFixed(2), totals.clientMiles.toFixed(1), totals.commuteMiles.toFixed(1)]],
+    foot: [['', '', '', '', totals.totalHours.toFixed(2), totals.clientMiles.toFixed(1), totals.commuteMiles.toFixed(1), 'Totals (Worked Only)']],
     startY: 38,
     theme: 'striped',
     headStyles: {
@@ -53,13 +60,14 @@ export const exportToPDF = (entries) => {
       cellPadding: 4,
     },
     columnStyles: {
-      0: { cellWidth: 25 },
-      1: { cellWidth: 25 },
-      2: { cellWidth: 22 },
-      3: { cellWidth: 22 },
-      4: { cellWidth: 25 },
-      5: { cellWidth: 25 },
-      6: { cellWidth: 25 },
+      0: { cellWidth: 22 },
+      1: { cellWidth: 22 },
+      2: { cellWidth: 20 },
+      3: { cellWidth: 20 },
+      4: { cellWidth: 22 },
+      5: { cellWidth: 22 },
+      6: { cellWidth: 22 },
+      7: { cellWidth: 18 },
     },
   });
 

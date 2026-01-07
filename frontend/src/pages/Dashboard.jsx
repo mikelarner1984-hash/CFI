@@ -51,6 +51,10 @@ export const Dashboard = () => {
     toast.success("Entry deleted successfully");
   };
 
+  const handleToggleWorked = (id, worked) => {
+    setEntries(entries.map(e => e.id === id ? { ...e, worked } : e));
+  };
+
   const handleExportPDF = () => {
     try {
       exportToPDF(entries);
@@ -68,7 +72,9 @@ export const Dashboard = () => {
   };
 
   const totals = useMemo(() => {
-    return entries.reduce(
+    // Only sum entries where worked is true
+    const workedEntries = entries.filter(entry => entry.worked !== false);
+    return workedEntries.reduce(
       (acc, entry) => ({
         totalHours: acc.totalHours + (entry.totalHours || 0),
         clientMiles: acc.clientMiles + (entry.clientMiles || 0),
@@ -125,7 +131,7 @@ export const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-semibold">{totals.totalHours.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground mt-1">Across all entries</p>
+              <p className="text-xs text-muted-foreground mt-1">Worked days only</p>
             </CardContent>
           </Card>
 
@@ -138,7 +144,7 @@ export const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-semibold">{totals.clientMiles.toFixed(1)}</div>
-              <p className="text-xs text-muted-foreground mt-1">Total distance</p>
+              <p className="text-xs text-muted-foreground mt-1">Worked days only</p>
             </CardContent>
           </Card>
 
@@ -151,7 +157,7 @@ export const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-semibold">{totals.commuteMiles.toFixed(1)}</div>
-              <p className="text-xs text-muted-foreground mt-1">Total distance</p>
+              <p className="text-xs text-muted-foreground mt-1">Worked days only</p>
             </CardContent>
           </Card>
         </div>
@@ -166,6 +172,7 @@ export const Dashboard = () => {
               entries={entries}
               onEdit={handleEditEntry}
               onDelete={handleDeleteEntry}
+              onToggleWorked={handleToggleWorked}
             />
           </CardContent>
         </Card>

@@ -64,6 +64,7 @@ const parseTextToEntries = (text) => {
         totalHours: totalHours,
         clientMiles: numbers[0] || 0,
         commuteMiles: numbers[1] || 0,
+        worked: true,
       });
     }
   }

@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { calculateHours } from "@/lib/timeUtils";
 
 export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) => {
@@ -173,6 +174,19 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
                   required
                 />
               </div>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
+              <div className="space-y-0.5">
+                <Label htmlFor="worked" className="text-base">Worked</Label>
+                <p className="text-sm text-muted-foreground">
+                  Mark this entry as worked day
+                </p>
+              </div>
+              <Switch
+                id="worked"
+                checked={formData.worked}
+                onCheckedChange={(checked) => setFormData({ ...formData, worked: checked })}
+              />
             </div>
           </div>
           <DialogFooter>

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +28,7 @@ import {
 import { MoreHorizontal, ArrowUpDown, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
-export const WorkTable = ({ entries, onEdit, onDelete }) => {
+export const WorkTable = ({ entries, onEdit, onDelete, onToggleWorked }) => {
   const [columnFilters, setColumnFilters] = useState([]);
   const [sorting, setSorting] = useState([]);
 
@@ -139,6 +140,19 @@ export const WorkTable = ({ entries, onEdit, onDelete }) => {
         },
       },
       {
+        accessorKey: "worked",
+        header: "Worked",
+        cell: ({ row }) => {
+          const entry = row.original;
+          return (
+            <Switch
+              checked={entry.worked !== undefined ? entry.worked : true}
+              onCheckedChange={(checked) => onToggleWorked(entry.id, checked)}
+            />
+          );
+        },
+      },
+      {
         id: "actions",
         cell: ({ row }) => {
           const entry = row.original;
@@ -170,7 +184,7 @@ export const WorkTable = ({ entries, onEdit, onDelete }) => {
         },
       },
     ],
-    [onEdit, onDelete]
+    [onEdit, onDelete, onToggleWorked]
   );
 
   const table = useReactTable({
@@ -189,7 +203,9 @@ export const WorkTable = ({ entries, onEdit, onDelete }) => {
 
   const totals = useMemo(() => {
     const filtered = table.getFilteredRowModel().rows.map(row => row.original);
-    return filtered.reduce(
+    // Only sum entries where worked is true
+    const workedEntries = filtered.filter(entry => entry.worked !== false);
+    return workedEntries.reduce(
       (acc, entry) => ({
         totalHours: acc.totalHours + (entry.totalHours || 0),
         clientMiles: acc.clientMiles + (entry.clientMiles || 0),
@@ -263,7 +279,7 @@ export const WorkTable = ({ entries, onEdit, onDelete }) => {
             <TableFooter>
               <TableRow>
                 <TableCell colSpan={4} className="font-semibold">
-                  Totals
+                  Totals (Worked Days Only)
                 </TableCell>
                 <TableCell className="font-semibold">
                   {totals.totalHours.toFixed(2)}
@@ -274,6 +290,7 @@ export const WorkTable = ({ entries, onEdit, onDelete }) => {
                 <TableCell className="font-semibold">
                   {totals.commuteMiles.toFixed(1)}
                 </TableCell>
+                <TableCell></TableCell>
                 <TableCell></TableCell>
               </TableRow>
             </TableFooter>
