@@ -131,7 +131,7 @@ export const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-semibold">{totals.totalHours.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground mt-1">Worked days only</p>
+              <p className="text-xs text-muted-foreground mt-1">CH Submitted only</p>
             </CardContent>
           </Card>
 
@@ -144,7 +144,7 @@ export const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-semibold">{totals.clientMiles.toFixed(1)}</div>
-              <p className="text-xs text-muted-foreground mt-1">Worked days only</p>
+              <p className="text-xs text-muted-foreground mt-1">CH Submitted only</p>
             </CardContent>
           </Card>
 
@@ -157,7 +157,7 @@ export const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-semibold">{totals.commuteMiles.toFixed(1)}</div>
-              <p className="text-xs text-muted-foreground mt-1">Worked days only</p>
+              <p className="text-xs text-muted-foreground mt-1">CH Submitted only</p>
             </CardContent>
           </Card>
         </div>

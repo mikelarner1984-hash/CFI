@@ -141,7 +141,7 @@ export const WorkTable = ({ entries, onEdit, onDelete, onToggleWorked }) => {
       },
       {
         accessorKey: "worked",
-        header: "Worked",
+        header: "CH Submitted",
         cell: ({ row }) => {
           const entry = row.original;
           return (
@@ -279,7 +279,7 @@ export const WorkTable = ({ entries, onEdit, onDelete, onToggleWorked }) => {
             <TableFooter>
               <TableRow>
                 <TableCell colSpan={4} className="font-semibold">
-                  Totals (Worked Days Only)
+                  Totals (CH Submitted Only)
                 </TableCell>
                 <TableCell className="font-semibold">
                   {totals.totalHours.toFixed(2)}

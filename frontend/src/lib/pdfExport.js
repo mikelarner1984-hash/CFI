@@ -39,9 +39,9 @@ export const exportToPDF = (entries) => {
   );
 
   doc.autoTable({
-    head: [['Date', 'Client', 'Start Time', 'Finish Time', 'Total Hours', 'Client Miles', 'Commute Miles', 'Worked']],
+    head: [['Date', 'Client', 'Start Time', 'Finish Time', 'Total Hours', 'Client Miles', 'Commute Miles', 'CH Submitted']],
     body: tableData,
-    foot: [['', '', '', '', totals.totalHours.toFixed(2), totals.clientMiles.toFixed(1), totals.commuteMiles.toFixed(1), 'Totals (Worked Only)']],
+    foot: [['', '', '', '', totals.totalHours.toFixed(2), totals.clientMiles.toFixed(1), totals.commuteMiles.toFixed(1), 'Totals (CH Submitted)']],
     startY: 38,
     theme: 'striped',
     headStyles: {

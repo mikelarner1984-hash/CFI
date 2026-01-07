@@ -177,9 +177,9 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
             </div>
             <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
               <div className="space-y-0.5">
-                <Label htmlFor="worked" className="text-base">Worked</Label>
+                <Label htmlFor="worked" className="text-base">CH Submitted</Label>
                 <p className="text-sm text-muted-foreground">
-                  Mark this entry as worked day
+                  Mark if this entry has been submitted
                 </p>
               </div>
               <Switch
