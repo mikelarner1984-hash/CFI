@@ -89,9 +89,16 @@ export const Dashboard = () => {
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-semibold text-foreground">Work Tracker</h1>
-              <p className="text-muted-foreground mt-1">Track your work hours and mileage</p>
+            <div className="flex items-center gap-4">
+              <img 
+                src="/cfi-logo.png" 
+                alt="CFI Group - Caring for Individuals" 
+                className="h-16 w-auto object-contain"
+              />
+              <div className="border-l pl-4">
+                <h1 className="text-3xl font-semibold text-foreground">Work Tracker</h1>
+                <p className="text-muted-foreground mt-1">Track your work hours and mileage</p>
+              </div>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button
