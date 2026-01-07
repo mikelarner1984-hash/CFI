@@ -58,6 +58,7 @@ const parseTextToEntries = (text) => {
       entries.push({
         id: Date.now() + Math.random(),
         date: date,
+        client: '',
         startTime: startTime,
         finishTime: finishTime,
         totalHours: totalHours,
