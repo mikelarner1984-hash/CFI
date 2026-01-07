@@ -53,6 +53,25 @@ export const WorkTable = ({ entries, onEdit, onDelete }) => {
         },
       },
       {
+        accessorKey: "client",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              className="h-8 px-2 lg:px-3"
+            >
+              Client
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }) => row.getValue("client") || "-",
+        filterFn: (row, id, value) => {
+          return row.getValue(id)?.toLowerCase().includes(value.toLowerCase());
+        },
+      },
+      {
         accessorKey: "startTime",
         header: "Start Time",
         cell: ({ row }) => row.getValue("startTime"),
@@ -243,7 +262,7 @@ export const WorkTable = ({ entries, onEdit, onDelete }) => {
           {table.getRowModel().rows?.length > 0 && (
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={3} className="font-semibold">
+                <TableCell colSpan={4} className="font-semibold">
                   Totals
                 </TableCell>
                 <TableCell className="font-semibold">

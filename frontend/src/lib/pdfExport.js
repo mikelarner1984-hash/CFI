@@ -14,6 +14,7 @@ export const exportToPDF = (entries) => {
 
   const tableData = entries.map(entry => [
     format(new Date(entry.date), 'MM/dd/yyyy'),
+    entry.client || '-',
     entry.startTime,
     entry.finishTime,
     entry.totalHours.toFixed(2),
@@ -31,9 +32,9 @@ export const exportToPDF = (entries) => {
   );
 
   doc.autoTable({
-    head: [['Date', 'Start Time', 'Finish Time', 'Total Hours', 'Client Miles', 'Commute Miles']],
+    head: [['Date', 'Client', 'Start Time', 'Finish Time', 'Total Hours', 'Client Miles', 'Commute Miles']],
     body: tableData,
-    foot: [['', '', 'Totals:', totals.totalHours.toFixed(2), totals.clientMiles.toFixed(1), totals.commuteMiles.toFixed(1)]],
+    foot: [['', '', '', 'Totals:', totals.totalHours.toFixed(2), totals.clientMiles.toFixed(1), totals.commuteMiles.toFixed(1)]],
     startY: 38,
     theme: 'striped',
     headStyles: {
@@ -52,12 +53,13 @@ export const exportToPDF = (entries) => {
       cellPadding: 4,
     },
     columnStyles: {
-      0: { cellWidth: 30 },
+      0: { cellWidth: 25 },
       1: { cellWidth: 25 },
-      2: { cellWidth: 25 },
-      3: { cellWidth: 28 },
-      4: { cellWidth: 28 },
-      5: { cellWidth: 28 },
+      2: { cellWidth: 22 },
+      3: { cellWidth: 22 },
+      4: { cellWidth: 25 },
+      5: { cellWidth: 25 },
+      6: { cellWidth: 25 },
     },
   });
 

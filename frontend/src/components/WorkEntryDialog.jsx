@@ -15,6 +15,7 @@ import { calculateHours } from "@/lib/timeUtils";
 export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) => {
   const [formData, setFormData] = useState({
     date: "",
+    client: "",
     startTime: "",
     finishTime: "",
     clientMiles: "",
@@ -27,6 +28,7 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
     if (editingEntry) {
       setFormData({
         date: editingEntry.date,
+        client: editingEntry.client || "",
         startTime: editingEntry.startTime,
         finishTime: editingEntry.finishTime,
         clientMiles: editingEntry.clientMiles.toString(),
@@ -35,6 +37,7 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
     } else {
       setFormData({
         date: new Date().toISOString().split("T")[0],
+        client: "",
         startTime: "",
         finishTime: "",
         clientMiles: "",
@@ -57,6 +60,7 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
     
     const entry = {
       date: formData.date,
+      client: formData.client,
       startTime: formData.startTime,
       finishTime: formData.finishTime,
       totalHours: calculatedHours,
@@ -67,6 +71,7 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
     onSave(entry);
     setFormData({
       date: new Date().toISOString().split("T")[0],
+      client: "",
       startTime: "",
       finishTime: "",
       clientMiles: "",
@@ -92,6 +97,17 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="client">Client</Label>
+              <Input
+                id="client"
+                type="text"
+                placeholder="Enter client name"
+                value={formData.client}
+                onChange={(e) => setFormData({ ...formData, client: e.target.value })}
                 required
               />
             </div>
