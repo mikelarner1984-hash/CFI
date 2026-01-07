@@ -213,6 +213,21 @@ frontend:
         agent: "testing"
         comment: "UPDATED: PDF import functionality modified to handle new format - Date column maps to date field, Time column (start-finish format) splits into start/finish times, Client (other staff) column maps to client field. Miles fields default to 0. Dialog updated with new format description."
 
+  - task: "PDF Export Functionality"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/Dashboard.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Need to test PDF export functionality (may be limited in automation)"
+      - working: true
+        agent: "testing"
+        comment: "PASSED: Export PDF button present and functional. Button is enabled when entries exist. Actual PDF generation not testable in automation but no errors occurred."
+
   - task: "Local Storage Persistence"
     implemented: true
     working: true
