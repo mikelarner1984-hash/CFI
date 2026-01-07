@@ -27,49 +27,160 @@ export const importFromPDF = async (file) => {
 
 const parseTextToEntries = (text) => {
   const entries = [];
-  const lines = text.split('\n');
+  const lines = text.split('\n').map(line => line.trim()).filter(line => line);
   
-  const dateRegex = /\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})\b/;
-  const timeRegex = /\b(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?\b/g;
-  const numberRegex = /\b(\d+\.?\d*)\b/g;
-
+  // Look for table headers to identify the structure
+  let headerIndex = -1;
+  let dateColIndex = -1;
+  let timeColIndex = -1;
+  let clientColIndex = -1;
+  
+  // Find header row and column positions
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-
-    const dateMatch = line.match(dateRegex);
-    if (!dateMatch) continue;
-
-    const timeMatches = [...line.matchAll(timeRegex)];
-    if (timeMatches.length < 2) continue;
-
-    const date = parseDateString(dateMatch[1]);
-    if (!date) continue;
-
-    const startTime = formatTimeFromMatch(timeMatches[0]);
-    const finishTime = formatTimeFromMatch(timeMatches[1]);
-
-    const remainingText = line.substring(timeMatches[1].index + timeMatches[1][0].length);
-    const numbers = [...remainingText.matchAll(numberRegex)].map(m => parseFloat(m[1]));
-
-    if (numbers.length >= 2) {
+    const line = lines[i].toLowerCase();
+    if (line.includes('date') && (line.includes('time') || line.includes('client'))) {
+      headerIndex = i;
+      
+      // Split the header line to find column positions
+      const headerParts = lines[i].split(/\s{2,}|\t/); // Split by multiple spaces or tabs
+      
+      for (let j = 0; j < headerParts.length; j++) {
+        const header = headerParts[j].toLowerCase().trim();
+        if (header.includes('date')) {
+          dateColIndex = j;
+        } else if (header.includes('time')) {
+          timeColIndex = j;
+        } else if (header.includes('client') || header.includes('staff')) {
+          clientColIndex = j;
+        }
+      }
+      break;
+    }
+  }
+  
+  // If we found headers, parse the data rows
+  if (headerIndex >= 0) {
+    for (let i = headerIndex + 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line) continue;
+      
+      // Split the data line using the same method as headers
+      const dataParts = line.split(/\s{2,}|\t/).map(part => part.trim());
+      
+      if (dataParts.length < Math.max(dateColIndex, timeColIndex, clientColIndex) + 1) {
+        continue; // Skip if not enough columns
+      }
+      
+      // Extract date
+      const dateStr = dataParts[dateColIndex] || '';
+      const date = parseDateString(dateStr);
+      if (!date) continue;
+      
+      // Extract and split time (format: "start-finish")
+      const timeStr = dataParts[timeColIndex] || '';
+      const timeRange = parseTimeRange(timeStr);
+      if (!timeRange) continue;
+      
+      // Extract client
+      const client = dataParts[clientColIndex] || '';
+      
+      // Calculate total hours
+      const totalHours = calculateHours(timeRange.startTime, timeRange.finishTime);
+      
+      entries.push({
+        id: Date.now() + Math.random() + i,
+        date: date,
+        client: client,
+        startTime: timeRange.startTime,
+        finishTime: timeRange.finishTime,
+        totalHours: totalHours,
+        clientMiles: 0, // Default values since not specified in the new format
+        commuteMiles: 0,
+        worked: true, // Default to worked
+      });
+    }
+  } else {
+    // Fallback: try to parse each line individually
+    const dateRegex = /\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})\b/;
+    const timeRangeRegex = /(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?\s*-\s*(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/i;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line) continue;
+      
+      const dateMatch = line.match(dateRegex);
+      const timeRangeMatch = line.match(timeRangeRegex);
+      
+      if (!dateMatch || !timeRangeMatch) continue;
+      
+      const date = parseDateString(dateMatch[1]);
+      if (!date) continue;
+      
+      const startTime = formatTimeFromMatch([
+        timeRangeMatch[0],
+        timeRangeMatch[1],
+        timeRangeMatch[2],
+        timeRangeMatch[3]
+      ]);
+      
+      const finishTime = formatTimeFromMatch([
+        timeRangeMatch[0],
+        timeRangeMatch[4],
+        timeRangeMatch[5],
+        timeRangeMatch[6]
+      ]);
+      
+      // Try to extract client name (text that's not date or time)
+      let client = line
+        .replace(dateMatch[0], '')
+        .replace(timeRangeMatch[0], '')
+        .replace(/\d+\.?\d*/g, '') // Remove numbers
+        .trim();
+      
       const totalHours = calculateHours(startTime, finishTime);
       
       entries.push({
-        id: Date.now() + Math.random(),
+        id: Date.now() + Math.random() + i,
         date: date,
-        client: '',
+        client: client,
         startTime: startTime,
         finishTime: finishTime,
         totalHours: totalHours,
-        clientMiles: numbers[0] || 0,
-        commuteMiles: numbers[1] || 0,
+        clientMiles: 0,
+        commuteMiles: 0,
         worked: true,
       });
     }
   }
-
+  
   return entries;
+};
+
+// New function to parse time ranges in format "start-finish"
+const parseTimeRange = (timeStr) => {
+  if (!timeStr) return null;
+  
+  // Match patterns like "9:00-17:00", "9:00 AM - 5:00 PM", etc.
+  const timeRangeRegex = /(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?\s*-\s*(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/i;
+  const match = timeStr.match(timeRangeRegex);
+  
+  if (!match) return null;
+  
+  const startTime = formatTimeFromMatch([
+    match[0],
+    match[1],
+    match[2],
+    match[3]
+  ]);
+  
+  const finishTime = formatTimeFromMatch([
+    match[0],
+    match[4],
+    match[5],
+    match[6]
+  ]);
+  
+  return { startTime, finishTime };
 };
 
 const parseDateString = (dateStr) => {
