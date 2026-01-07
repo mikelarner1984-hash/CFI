@@ -1,5 +1,17 @@
 {
   "appId": "com.worktracker.app",
   "appName": "Work Tracker",
-  "webDir": "build"
+  "webDir": "build",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "buildOptions": {
+      "keystorePath": "",
+      "keystorePassword": "",
+      "keystoreAlias": "",
+      "keystoreAliasPassword": "",
+      "releaseType": "APK"
+    }
+  }
 }

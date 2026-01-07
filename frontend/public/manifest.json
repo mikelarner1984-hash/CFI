@@ -1,0 +1,24 @@
+{
+  "short_name": "Work Tracker",
+  "name": "Work Tracker - Track Hours and Mileage",
+  "description": "Professional work tracker for managing hours, mileage, and client information",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#3B82F6",
+  "background_color": "#FAFAFA",
+  "orientation": "portrait"
+}
