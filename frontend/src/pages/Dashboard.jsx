@@ -35,26 +35,12 @@ export const Dashboard = () => {
         }
       } catch (e) {
         console.error("Error loading datasets:", e);
-        // Create default dataset if loading fails
-        const defaultDataset = {
-          id: Date.now(),
-          title: "Default Dataset",
-          createdAt: new Date().toISOString(),
-          entries: []
-        };
-        setDatasets([defaultDataset]);
-        setActiveDatasetId(defaultDataset.id);
+        // Start with empty datasets array
+        setDatasets([]);
       }
     } else {
-      // Create default dataset if none exists
-      const defaultDataset = {
-        id: Date.now(),
-        title: "Default Dataset",
-        createdAt: new Date().toISOString(),
-        entries: []
-      };
-      setDatasets([defaultDataset]);
-      setActiveDatasetId(defaultDataset.id);
+      // Start with empty datasets array - no default dataset
+      setDatasets([]);
     }
   }, []);
 
@@ -229,16 +215,18 @@ export const Dashboard = () => {
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Dataset Selector */}
-        <div className="mb-6 p-4 bg-card rounded-lg border">
-          <DatasetSelector
-            datasets={datasets}
-            activeDatasetId={activeDatasetId}
-            onSelectDataset={setActiveDatasetId}
-            onCreateDataset={handleCreateDataset}
-            onDeleteDataset={handleDeleteDataset}
-          />
-        </div>
+        {/* Dataset Selector - only show if datasets exist */}
+        {datasets.length > 0 && (
+          <div className="mb-6 p-4 bg-card rounded-lg border">
+            <DatasetSelector
+              datasets={datasets}
+              activeDatasetId={activeDatasetId}
+              onSelectDataset={setActiveDatasetId}
+              onCreateDataset={handleCreateDataset}
+              onDeleteDataset={handleDeleteDataset}
+            />
+          </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid gap-6 md:grid-cols-3 mb-8">
@@ -284,16 +272,53 @@ export const Dashboard = () => {
           <CardHeader>
             <CardTitle>Work Entries</CardTitle>
             <CardDescription>
-              {activeDataset ? `Viewing: ${activeDataset.title}` : "Select a dataset"}
+              {activeDataset ? `Viewing: ${activeDataset.title}` : "Create or import a dataset to get started"}
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <WorkTable
-              entries={entries}
-              onEdit={handleEditEntry}
-              onDelete={handleDeleteEntry}
-              onToggleWorked={handleToggleWorked}
-            />
+            {datasets.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 px-4">
+                <div className="flex flex-col items-center gap-4 text-center max-w-md">
+                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <svg className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">No Datasets Yet</h3>
+                    <p className="text-muted-foreground text-sm">
+                      Get started by importing a Word document or creating a new dataset manually.
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button onClick={() => setIsWordImportOpen(true)} className="gap-2">
+                      <Upload className="h-4 w-4" />
+                      Import Word Doc
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        const title = prompt("Enter dataset title:");
+                        if (title && title.trim()) {
+                          handleCreateDataset(title.trim());
+                        }
+                      }} 
+                      className="gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Create Dataset
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <WorkTable
+                entries={entries}
+                onEdit={handleEditEntry}
+                onDelete={handleDeleteEntry}
+                onToggleWorked={handleToggleWorked}
+              />
+            )}
           </CardContent>
         </Card>
       </div>
