@@ -2,11 +2,11 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { format } from 'date-fns';
 
-export const exportToPDF = (entries) => {
+export const exportToPDF = (entries, datasetTitle = 'Work Tracker') => {
   const doc = new jsPDF();
 
   doc.setFontSize(18);
-  doc.text('Work Tracker Report', 14, 22);
+  doc.text(datasetTitle, 14, 22);
 
   doc.setFontSize(11);
   doc.setTextColor(100);

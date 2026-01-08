@@ -3,39 +3,112 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { WorkEntryDialog } from "@/components/WorkEntryDialog";
 import { WorkTable } from "@/components/WorkTable";
-import { PDFImportDialog } from "@/components/PDFImportDialog";
+import { PDFImportWithTitleDialog } from "@/components/PDFImportWithTitleDialog";
+import { DatasetSelector } from "@/components/DatasetSelector";
 import { exportToPDF } from "@/lib/pdfExport";
 import { Download, Upload, Plus, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 export const Dashboard = () => {
-  const [entries, setEntries] = useState([]);
+  const [datasets, setDatasets] = useState([]);
+  const [activeDatasetId, setActiveDatasetId] = useState(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isPDFImportOpen, setIsPDFImportOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState(null);
 
+  // Load datasets from localStorage on mount
   useEffect(() => {
-    const stored = localStorage.getItem("workTrackerEntries");
+    const stored = localStorage.getItem("workTrackerDatasets");
     if (stored) {
       try {
-        setEntries(JSON.parse(stored));
+        const parsedDatasets = JSON.parse(stored);
+        setDatasets(parsedDatasets);
+        if (parsedDatasets.length > 0) {
+          setActiveDatasetId(parsedDatasets[0].id);
+        }
       } catch (e) {
-        console.error("Error loading entries:", e);
+        console.error("Error loading datasets:", e);
+        // Create default dataset if loading fails
+        const defaultDataset = {
+          id: Date.now(),
+          title: "Default Dataset",
+          createdAt: new Date().toISOString(),
+          entries: []
+        };
+        setDatasets([defaultDataset]);
+        setActiveDatasetId(defaultDataset.id);
       }
+    } else {
+      // Create default dataset if none exists
+      const defaultDataset = {
+        id: Date.now(),
+        title: "Default Dataset",
+        createdAt: new Date().toISOString(),
+        entries: []
+      };
+      setDatasets([defaultDataset]);
+      setActiveDatasetId(defaultDataset.id);
     }
   }, []);
 
+  // Save datasets to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem("workTrackerEntries", JSON.stringify(entries));
-  }, [entries]);
+    if (datasets.length > 0) {
+      localStorage.setItem("workTrackerDatasets", JSON.stringify(datasets));
+    }
+  }, [datasets]);
+
+  const activeDataset = datasets.find(d => d.id === activeDatasetId);
+  const entries = activeDataset?.entries || [];
+
+  const handleCreateDataset = (title) => {
+    const newDataset = {
+      id: Date.now(),
+      title,
+      createdAt: new Date().toISOString(),
+      entries: []
+    };
+    setDatasets([...datasets, newDataset]);
+    setActiveDatasetId(newDataset.id);
+    toast.success(`Dataset "${title}" created`);
+  };
+
+  const handleDeleteDataset = (datasetId) => {
+    if (datasets.length === 1) {
+      toast.error("Cannot delete the last dataset");
+      return;
+    }
+    
+    const datasetToDelete = datasets.find(d => d.id === datasetId);
+    setDatasets(datasets.filter(d => d.id !== datasetId));
+    
+    // Switch to another dataset if we deleted the active one
+    if (datasetId === activeDatasetId) {
+      const remainingDatasets = datasets.filter(d => d.id !== datasetId);
+      setActiveDatasetId(remainingDatasets[0].id);
+    }
+    
+    toast.success(`Dataset "${datasetToDelete?.title}" deleted`);
+  };
+
+  const updateActiveDatasetEntries = (newEntries) => {
+    setDatasets(datasets.map(d => 
+      d.id === activeDatasetId 
+        ? { ...d, entries: newEntries }
+        : d
+    ));
+  };
 
   const handleAddEntry = (newEntry) => {
     if (editingEntry) {
-      setEntries(entries.map(e => e.id === editingEntry.id ? { ...newEntry, id: editingEntry.id } : e));
+      const updatedEntries = entries.map(e => 
+        e.id === editingEntry.id ? { ...newEntry, id: editingEntry.id } : e
+      );
+      updateActiveDatasetEntries(updatedEntries);
       setEditingEntry(null);
       toast.success("Entry updated successfully");
     } else {
-      setEntries([...entries, { ...newEntry, id: Date.now() }]);
+      updateActiveDatasetEntries([...entries, { ...newEntry, id: Date.now() }]);
       toast.success("Entry added successfully");
     }
     setIsAddDialogOpen(false);
@@ -47,17 +120,17 @@ export const Dashboard = () => {
   };
 
   const handleDeleteEntry = (id) => {
-    setEntries(entries.filter(e => e.id !== id));
+    updateActiveDatasetEntries(entries.filter(e => e.id !== id));
     toast.success("Entry deleted successfully");
   };
 
   const handleToggleWorked = (id, worked) => {
-    setEntries(entries.map(e => e.id === id ? { ...e, worked } : e));
+    updateActiveDatasetEntries(entries.map(e => e.id === id ? { ...e, worked } : e));
   };
 
   const handleExportPDF = () => {
     try {
-      exportToPDF(entries);
+      exportToPDF(entries, activeDataset?.title);
       toast.success("PDF exported successfully");
     } catch (error) {
       toast.error("Error exporting PDF");
@@ -65,10 +138,22 @@ export const Dashboard = () => {
     }
   };
 
-  const handleImportPDF = (importedEntries) => {
-    setEntries([...entries, ...importedEntries]);
+  const handleImportPDF = (importedEntries, title) => {
+    // Create new dataset with imported entries
+    const newDataset = {
+      id: Date.now(),
+      title: title,
+      createdAt: new Date().toISOString(),
+      entries: importedEntries.map((entry, index) => ({
+        ...entry,
+        id: Date.now() + index
+      }))
+    };
+    
+    setDatasets([...datasets, newDataset]);
+    setActiveDatasetId(newDataset.id);
     setIsPDFImportOpen(false);
-    toast.success(`Imported ${importedEntries.length} entries`);
+    toast.success(`Created dataset "${title}" with ${importedEntries.length} entries`);
   };
 
   const totals = useMemo(() => {
@@ -130,6 +215,18 @@ export const Dashboard = () => {
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Dataset Selector */}
+        <div className="mb-6 p-4 bg-card rounded-lg border">
+          <DatasetSelector
+            datasets={datasets}
+            activeDatasetId={activeDatasetId}
+            onSelectDataset={setActiveDatasetId}
+            onCreateDataset={handleCreateDataset}
+            onDeleteDataset={handleDeleteDataset}
+          />
+        </div>
+
+        {/* Stats Cards */}
         <div className="grid gap-6 md:grid-cols-3 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -172,7 +269,9 @@ export const Dashboard = () => {
         <Card>
           <CardHeader>
             <CardTitle>Work Entries</CardTitle>
-            <CardDescription>View and manage all your work entries</CardDescription>
+            <CardDescription>
+              {activeDataset ? `Viewing: ${activeDataset.title}` : "Select a dataset"}
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <WorkTable
@@ -192,7 +291,7 @@ export const Dashboard = () => {
         editingEntry={editingEntry}
       />
 
-      <PDFImportDialog
+      <PDFImportWithTitleDialog
         open={isPDFImportOpen}
         onOpenChange={setIsPDFImportOpen}
         onImport={handleImportPDF}
