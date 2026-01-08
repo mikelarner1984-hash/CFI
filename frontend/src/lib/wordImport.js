@@ -12,15 +12,28 @@ export const importFromWord = async (file) => {
     const text = result.value;
     
     console.log('Extracted text length:', text.length);
-    console.log('First 1000 chars:', text.substring(0, 1000));
+    console.log('First 2000 chars:', text.substring(0, 2000));
+    console.log('Full text preview:', text.substring(0, 5000));
     
     const entries = parseTextToEntries(text);
     
     console.log('Parsed entries:', entries.length);
     
     if (entries.length === 0) {
-      console.error('No entries parsed. Full text:', text.substring(0, 2000));
-      throw new Error('No valid entries found in document. Please check the document format matches: Date (e.g. "Fri 2/1"), Time (e.g. "09:00-11:00"), Client names.');
+      console.error('No entries parsed.');
+      console.log('Full extracted text:', text);
+      
+      // Show helpful error with actual text preview
+      const preview = text.substring(0, 500);
+      throw new Error(
+        `No valid entries found in document.\n\n` +
+        `Text extracted preview:\n"${preview}..."\n\n` +
+        `Expected format:\n` +
+        `- Date like "Fri 2/1" or "Mon 5/1"\n` +
+        `- Time like "09:00-11:00"\n` +
+        `- Client names after the time\n\n` +
+        `Please check the document format or try manually adding entries.`
+      );
     }
     
     return entries;
@@ -36,127 +49,161 @@ export const importFromWord = async (file) => {
 const parseTextToEntries = (text) => {
   const entries = [];
   
-  // Split into lines and clean
-  const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+  console.log('Full text length:', text.length);
+  console.log('First 1000 chars:', text.substring(0, 1000));
   
-  console.log('Total lines:', lines.length);
+  // The text might be all on one line - split by day of week patterns
+  // Pattern: (Day name) followed by (number/number)
+  const entrySplitPattern = /(?=(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+\d{1,2}\/\d{1,2}\s+\d{1,2}:\d{2}-\d{1,2}:\d{2})/gi;
   
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+  // Split the text into entries
+  let entryStrings = text.split(entrySplitPattern).filter(s => s && s.trim().length > 20);
+  
+  // Remove the day name capture groups
+  entryStrings = entryStrings.filter(s => !/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)$/i.test(s.trim()));
+  
+  console.log('Split into', entryStrings.length, 'potential entries');
+  console.log('First 5 entry strings:', entryStrings.slice(0, 5));
+  
+  // Date pattern: "Fri 2/1"
+  const datePattern = /(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+(\d{1,2})\/(\d{1,2})/i;
+  
+  // Time pattern: "09:00-11:00"
+  const timePattern = /(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})/;
+  
+  for (let i = 0; i < entryStrings.length; i++) {
+    const entryText = entryStrings[i].trim();
     
-    // Skip empty or header lines
-    if (!line || 
-        line.includes('Care Horizons') || 
-        line.includes('Staff Work Schedule') ||
-        line.includes('Coordinator') ||
-        line.includes('Status Selection') ||
-        line.includes('Staff providing care') ||
-        line.includes('Visits') ||
-        line.toLowerCase().includes('date') && line.toLowerCase().includes('time')) {
+    if (entryText.length < 20) continue;
+    
+    console.log(`\n--- Processing entry ${i} ---`);
+    console.log('Entry text:', entryText.substring(0, 150));
+    
+    // Match date
+    const dateMatch = entryText.match(datePattern);
+    if (!dateMatch) {
+      console.log('No date match');
+      continue;
+    }
+    console.log('✓ Date matched:', dateMatch[0]);
+    
+    // Match time
+    const timeMatch = entryText.match(timePattern);
+    if (!timeMatch) {
+      console.log('No time match');
+      continue;
+    }
+    console.log('✓ Time matched:', timeMatch[0]);
+    
+    // Parse date
+    const day = parseInt(dateMatch[2]);
+    const month = parseInt(dateMatch[3]);
+    const now = new Date();
+    let year = now.getFullYear();
+    
+    if (month === 1 && now.getMonth() >= 11) {
+      year += 1;
+    }
+    
+    const date = new Date(year, month - 1, day);
+    if (isNaN(date.getTime())) {
+      console.log('Invalid date');
       continue;
     }
     
-    // Look for date pattern: Day name followed by day/month
-    // Examples: "Fri 2/1", "Mon 5/1", "Tue 6/1"
-    const dateMatch = line.match(/(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s*(\d{1,2})\s*[\/\-]\s*(\d{1,2})/i);
+    // Parse times
+    const startHour = parseInt(timeMatch[1]);
+    const startMin = timeMatch[2];
+    const endHour = parseInt(timeMatch[3]);
+    const endMin = timeMatch[4];
     
-    // Look for time pattern: HH:MM-HH:MM
-    // Examples: "09:00-11:00", "11:30-22:59", "23:00-07:00"
-    const timeMatch = line.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
+    const startTime = `${startHour.toString().padStart(2, '0')}:${startMin}`;
+    const endTime = `${endHour.toString().padStart(2, '0')}:${endMin}`;
     
-    if (dateMatch && timeMatch) {
-      console.log(`Found match on line ${i}: ${line.substring(0, 100)}`);
+    console.log('Times:', startTime, '-', endTime);
+    
+    // Extract client name
+    // Pattern in text: "Fri 2/1 09:00-11:00 02:00 Larner, M Argo, B Day Support"
+    // After time: " 02:00 Larner, M Argo, B Day Support"
+    
+    let client = '';
+    
+    // Get text after the time match
+    const timeIndex = entryText.indexOf(timeMatch[0]);
+    const afterTime = entryText.substring(timeIndex + timeMatch[0].length).trim();
+    console.log('After time:', afterTime);
+    
+    // Split by spaces (keeping multiple spaces as separator)
+    const parts = afterTime.split(/\s+/);
+    console.log('Parts:', parts.slice(0, 10));
+    
+    // Skip: duration (XX:XX), then staff name (contains "Larner"), then get client name
+    let skipCount = 0;
+    let foundLarner = false;
+    
+    for (let j = 0; j < parts.length; j++) {
+      const part = parts[j];
       
-      const day = parseInt(dateMatch[2]);
-      const month = parseInt(dateMatch[3]);
-      
-      // Determine year
-      const now = new Date();
-      let year = now.getFullYear();
-      
-      // If January and we're in December or later, it's next year
-      if (month === 1 && now.getMonth() >= 11) {
-        year += 1;
-      }
-      
-      const date = new Date(year, month - 1, day);
-      
-      if (isNaN(date.getTime())) {
-        console.warn(`Invalid date: ${day}/${month}/${year}`);
+      // Skip duration (format HH:MM)
+      if (/^\d{1,2}:\d{2}$/.test(part)) {
+        console.log('Skipping duration:', part);
+        skipCount++;
         continue;
       }
       
-      // Parse times
-      const startHour = parseInt(timeMatch[1]);
-      const startMin = timeMatch[2];
-      const endHour = parseInt(timeMatch[3]);
-      const endMin = timeMatch[4];
-      
-      const startTime = `${startHour.toString().padStart(2, '0')}:${startMin}`;
-      const endTime = `${endHour.toString().padStart(2, '0')}:${endMin}`;
-      
-      // Try to extract client name
-      let client = '';
-      
-      // Remove everything before and including the time
-      const afterTime = line.substring(line.indexOf(timeMatch[0]) + timeMatch[0].length);
-      
-      // Split by whitespace
-      const parts = afterTime.split(/\s+/).filter(p => p.trim());
-      
-      // Look for client name patterns
-      for (let j = 0; j < parts.length; j++) {
-        const part = parts[j];
-        
-        // Skip durations (format: XX:XX)
-        if (/^\d{1,2}:\d{2}$/.test(part)) continue;
-        
-        // Skip staff name
-        if (part.toLowerCase().includes('larner')) continue;
-        
-        // Look for name with comma (e.g., "Argo,", "Preece,", "Stanton,")
-        if (part.includes(',')) {
-          // Get this word and potentially the next one (initial)
-          client = part;
-          if (j + 1 < parts.length && parts[j + 1].length <= 3) {
-            client += ' ' + parts[j + 1];
-          }
-          break;
+      // Check if this contains "Larner" - this is the staff
+      if (/larner/i.test(part)) {
+        console.log('Found staff:', part);
+        foundLarner = true;
+        skipCount++;
+        // Also skip next part if it's just a letter (the initial)
+        if (j + 1 < parts.length && parts[j + 1].length <= 2) {
+          j++; // Skip the initial
+          skipCount++;
         }
-        
-        // Look for capitalized words that could be names
-        if (/^[A-Z][a-z]+$/.test(part) && j < parts.length - 1) {
-          // Check if next part could be an initial or last name
-          const nextPart = parts[j + 1];
-          if (nextPart.includes(',') || /^[A-Z]\.?$/.test(nextPart)) {
-            client = part + ' ' + nextPart;
-            break;
-          }
-        }
+        continue;
       }
       
-      // Clean up client name
-      client = client.replace(/,\s*$/, '').trim();
-      
-      const totalHours = calculateHours(startTime, endTime);
-      
-      const entry = {
-        id: Date.now() + Math.random() + i,
-        date: date.toISOString().split('T')[0],
-        client: client,
-        startTime: startTime,
-        finishTime: endTime,
-        totalHours: totalHours,
-        clientMiles: 0,
-        commuteMiles: 0,
-        worked: true,
-      };
-      
-      console.log('Created entry:', entry);
-      entries.push(entry);
+      // After Larner, the next name is the client
+      if (foundLarner && skipCount > 0) {
+        // This should be the client name
+        client = part;
+        console.log('Client part 1:', client);
+        
+        // If next part looks like initial or continuation, add it
+        if (j + 1 < parts.length) {
+          const nextPart = parts[j + 1];
+          // Add if it's a single letter/initial or has comma
+          if (nextPart.length <= 3 || nextPart.includes(',')) {
+            client += ' ' + nextPart;
+            console.log('Client complete:', client);
+          }
+        }
+        break;
+      }
     }
+    
+    // Clean up client name (remove trailing commas)
+    client = client.replace(/,\s*$/, '').replace(/\s+/g, ' ').trim();
+    
+    const totalHours = calculateHours(startTime, endTime);
+    
+    const entry = {
+      id: Date.now() + Math.random() + i,
+      date: date.toISOString().split('T')[0],
+      client: client,
+      startTime: startTime,
+      finishTime: endTime,
+      totalHours: totalHours,
+      clientMiles: 0,
+      commuteMiles: 0,
+      worked: true,
+    };
+    
+    console.log('✅ ENTRY CREATED:', JSON.stringify(entry));
+    entries.push(entry);
   }
   
-  console.log(`Total entries created: ${entries.length}`);
+  console.log(`\n✅✅✅ Total entries created: ${entries.length} ✅✅✅`);
   return entries;
 };
