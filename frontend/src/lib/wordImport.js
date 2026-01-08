@@ -120,6 +120,9 @@ const parseTextToEntries = (text) => {
     let startTime = `${startHour.toString().padStart(2, '0')}:${startMin}`;
     let endTime = `${endHour.toString().padStart(2, '0')}:${endMin}`;
     
+    // Track if this entry was adjusted
+    let wasAdjusted = false;
+    
     // If start time is 23:00, adjust to 00:00 and move date forward 1 day
     if (startTime === '23:00') {
       console.log('Adjusting 23:00 start time to next day');
@@ -127,6 +130,7 @@ const parseTextToEntries = (text) => {
       date.setDate(date.getDate() + 1);
       console.log('New date:', date.toISOString().split('T')[0]);
       console.log('New start time:', startTime);
+      wasAdjusted = true;
     }
     
     // If finish time is 07:00, adjust to 08:00
@@ -134,6 +138,7 @@ const parseTextToEntries = (text) => {
       console.log('Adjusting 07:00 finish time to 08:00');
       endTime = '08:00';
       console.log('New finish time:', endTime);
+      wasAdjusted = true;
     }
     
     // If finish time is 22:59, adjust to 23:59
@@ -141,6 +146,7 @@ const parseTextToEntries = (text) => {
       console.log('Adjusting 22:59 finish time to 23:59');
       endTime = '23:59';
       console.log('New finish time:', endTime);
+      wasAdjusted = true;
     }
     
     console.log('Times:', startTime, '-', endTime);
