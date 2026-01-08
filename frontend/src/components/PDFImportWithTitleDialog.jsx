@@ -110,10 +110,10 @@ export const PDFImportWithTitleDialog = ({ open, onOpenChange, onImport }) => {
           <div className="bg-muted/50 rounded-lg p-4 space-y-2">
             <p className="text-sm font-medium">Expected PDF Format:</p>
             <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Table with columns: Date, Time, Client (other staff)</li>
-              <li>Date format: MM/DD/YYYY or similar</li>
-              <li>Time format: HH:MM-HH:MM (e.g., "9:00-17:00" or "9:00 AM - 5:00 PM")</li>
-              <li>Client column should contain client/staff names</li>
+              <li>Table with columns: Date, Time, Staff, Client (other staff), Activity</li>
+              <li>Date format: "Day DD/M" (e.g., "Fri 2/1", "Mon 12/1")</li>
+              <li>Time format: HH:MM-HH:MM (e.g., "09:00-11:00", "13:30-22:59")</li>
+              <li>Client column should contain client names (e.g., "Argo, B", "Preece, D")</li>
               <li>Miles fields will default to 0 and can be edited after import</li>
             </ul>
           </div>
