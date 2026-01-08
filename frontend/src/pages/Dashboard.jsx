@@ -24,11 +24,13 @@ export const Dashboard = () => {
     if (stored) {
       try {
         const parsedDatasets = JSON.parse(stored);
-        // Merge entries in each dataset
-        const datasetsWithMerged = parsedDatasets.map(dataset => ({
-          ...dataset,
-          entries: mergeIdenticalEntries(dataset.entries)
-        }));
+        // Filter out default dataset and merge entries in each dataset
+        const datasetsWithMerged = parsedDatasets
+          .filter(dataset => dataset.title !== "Default Dataset") // Hide default dataset
+          .map(dataset => ({
+            ...dataset,
+            entries: mergeIdenticalEntries(dataset.entries)
+          }));
         setDatasets(datasetsWithMerged);
         if (datasetsWithMerged.length > 0) {
           setActiveDatasetId(datasetsWithMerged[0].id);
@@ -47,7 +49,9 @@ export const Dashboard = () => {
   // Save datasets to localStorage whenever they change
   useEffect(() => {
     if (datasets.length > 0) {
-      localStorage.setItem("workTrackerDatasets", JSON.stringify(datasets));
+      // Filter out default dataset before saving
+      const datasetsToSave = datasets.filter(d => d.title !== "Default Dataset");
+      localStorage.setItem("workTrackerDatasets", JSON.stringify(datasetsToSave));
     }
   }, [datasets]);
 
