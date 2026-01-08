@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { WorkEntryDialog } from "@/components/WorkEntryDialog";
 import { WorkTable } from "@/components/WorkTable";
-import { PDFImportWithTitleDialog } from "@/components/PDFImportWithTitleDialog";
+import { WordImportDialog } from "@/components/PDFImportWithTitleDialog";
 import { DatasetSelector } from "@/components/DatasetSelector";
 import { exportToPDF } from "@/lib/pdfExport";
 import { Download, Upload, Plus, Clock } from "lucide-react";
@@ -13,7 +13,7 @@ export const Dashboard = () => {
   const [datasets, setDatasets] = useState([]);
   const [activeDatasetId, setActiveDatasetId] = useState(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isPDFImportOpen, setIsPDFImportOpen] = useState(false);
+  const [isWordImportOpen, setIsWordImportOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState(null);
 
   // Load datasets from localStorage on mount
@@ -138,7 +138,7 @@ export const Dashboard = () => {
     }
   };
 
-  const handleImportPDF = (importedEntries, title) => {
+  const handleImportWord = (importedEntries, title) => {
     // Create new dataset with imported entries
     const newDataset = {
       id: Date.now(),
@@ -152,7 +152,7 @@ export const Dashboard = () => {
     
     setDatasets([...datasets, newDataset]);
     setActiveDatasetId(newDataset.id);
-    setIsPDFImportOpen(false);
+    setIsWordImportOpen(false);
     toast.success(`Created dataset "${title}" with ${importedEntries.length} entries`);
   };
 
@@ -196,9 +196,9 @@ export const Dashboard = () => {
                 <Plus className="h-4 w-4" />
                 Add Entry
               </Button>
-              <Button onClick={() => setIsPDFImportOpen(true)} variant="outline" className="gap-2">
+              <Button onClick={() => setIsWordImportOpen(true)} variant="outline" className="gap-2">
                 <Upload className="h-4 w-4" />
-                Import PDF
+                Import Word Doc
               </Button>
               <Button
                 onClick={handleExportPDF}
@@ -291,10 +291,10 @@ export const Dashboard = () => {
         editingEntry={editingEntry}
       />
 
-      <PDFImportWithTitleDialog
-        open={isPDFImportOpen}
-        onOpenChange={setIsPDFImportOpen}
-        onImport={handleImportPDF}
+      <WordImportDialog
+        open={isWordImportOpen}
+        onOpenChange={setIsWordImportOpen}
+        onImport={handleImportWord}
       />
     </div>
   );
