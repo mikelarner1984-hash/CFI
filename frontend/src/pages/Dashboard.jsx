@@ -6,9 +6,10 @@ import { WorkTable } from "@/components/WorkTable";
 import { WordImportDialog } from "@/components/PDFImportWithTitleDialog";
 import { DatasetSelector } from "@/components/DatasetSelector";
 import { exportToXLSX } from "@/lib/xlsxExport";
+import { exportToICS } from "@/lib/icsExport";
 import { calculateHours } from "@/lib/timeUtils";
 import { mergeIdenticalEntries } from "@/lib/mergeEntries";
-import { Download, Upload, Plus, Clock } from "lucide-react";
+import { Download, Upload, Plus, Clock, Calendar } from "lucide-react";
 import { toast } from "sonner";
 
 export const Dashboard = () => {
@@ -137,6 +138,16 @@ export const Dashboard = () => {
     }
   };
 
+  const handleExportICS = () => {
+    try {
+      exportToICS(entries, activeDataset?.title);
+      toast.success("Calendar file exported successfully");
+    } catch (error) {
+      toast.error("Error exporting calendar file");
+      console.error("Export error:", error);
+    }
+  };
+
   const handleImportWord = (importedEntries, title) => {
     // Merge entries with same date and client first
     const mergedEntries = mergeIdenticalEntries(importedEntries);
@@ -212,6 +223,15 @@ export const Dashboard = () => {
               >
                 <Download className="h-4 w-4" />
                 Export Excel
+              </Button>
+              <Button
+                onClick={handleExportICS}
+                variant="outline"
+                className="gap-2"
+                disabled={entries.length === 0}
+              >
+                <Calendar className="h-4 w-4" />
+                Export Calendar
               </Button>
             </div>
           </div>

@@ -1,6 +1,6 @@
 {
   "short_name": "Work Tracker",
-  "name": "Work Tracker - Track Hours and Mileage",
+  "name": "Work Tracker - CFI Group",
   "description": "Professional work tracker for managing hours, mileage, and client information",
   "icons": [
     {
@@ -14,6 +14,12 @@
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "any"
     }
   ],
   "start_url": "/",
