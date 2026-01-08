@@ -67,6 +67,26 @@ export const WorkTable = ({ entries, onEdit, onDelete, onToggleWorked }) => {
         },
       },
       {
+        accessorKey: "isWeekend",
+        header: "Weekend",
+        cell: ({ row }) => {
+          const date = new Date(row.getValue("date"));
+          const dayOfWeek = date.getDay();
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0 = Sunday, 6 = Saturday
+          return (
+            <div className="flex items-center justify-center">
+              <input
+                type="checkbox"
+                checked={isWeekend}
+                readOnly
+                disabled
+                className="h-4 w-4 rounded border-gray-300"
+              />
+            </div>
+          );
+        },
+      },
+      {
         accessorKey: "client",
         header: ({ column }) => {
           return (
@@ -279,7 +299,8 @@ export const WorkTable = ({ entries, onEdit, onDelete, onToggleWorked }) => {
             <TableFooter>
               <TableRow>
                 <TableCell></TableCell>
-                <TableCell colSpan={3} className="font-semibold">
+                <TableCell></TableCell>
+                <TableCell colSpan={2} className="font-semibold">
                   Totals (CH Submitted Only)
                 </TableCell>
                 <TableCell className="font-semibold">

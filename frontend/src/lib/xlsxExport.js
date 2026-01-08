@@ -6,16 +6,23 @@ export const exportToXLSX = (entries, datasetTitle = 'Work Tracker') => {
     console.log('Starting XLSX export...', entries.length, 'entries');
     
     // Prepare the data rows
-    const data = entries.map(entry => ({
-      'CH Submitted': entry.worked !== false ? 'Yes' : 'No',
-      'Date': format(new Date(entry.date), 'dd MMM'),
-      'Client': entry.client || '-',
-      'Start Time': entry.startTime || '-',
-      'Finish Time': entry.finishTime || '-',
-      'Total Hours': (entry.totalHours || 0).toFixed(2),
-      'Client Miles': (entry.clientMiles || 0).toFixed(1),
-      'Commute Miles': (entry.commuteMiles || 0).toFixed(1),
-    }));
+    const data = entries.map(entry => {
+      const date = new Date(entry.date);
+      const dayOfWeek = date.getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      
+      return {
+        'CH Submitted': entry.worked !== false ? 'Yes' : 'No',
+        'Date': format(date, 'dd MMM'),
+        'Weekend': isWeekend ? 'Yes' : 'No',
+        'Client': entry.client || '-',
+        'Start Time': entry.startTime || '-',
+        'Finish Time': entry.finishTime || '-',
+        'Total Hours': (entry.totalHours || 0).toFixed(2),
+        'Client Miles': (entry.clientMiles || 0).toFixed(1),
+        'Commute Miles': (entry.commuteMiles || 0).toFixed(1),
+      };
+    });
 
     // Calculate totals (only for CH Submitted = Yes)
     const totals = entries.reduce(
@@ -36,6 +43,7 @@ export const exportToXLSX = (entries, datasetTitle = 'Work Tracker') => {
     data.push({
       'CH Submitted': '',
       'Date': '',
+      'Weekend': '',
       'Client': '',
       'Start Time': 'Totals (CH Submitted):',
       'Finish Time': '',
@@ -53,6 +61,7 @@ export const exportToXLSX = (entries, datasetTitle = 'Work Tracker') => {
     worksheet['!cols'] = [
       { wch: 14 },  // CH Submitted
       { wch: 12 },  // Date
+      { wch: 10 },  // Weekend
       { wch: 20 },  // Client
       { wch: 12 },  // Start Time
       { wch: 12 },  // Finish Time
