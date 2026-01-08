@@ -5,7 +5,7 @@ import { WorkEntryDialog } from "@/components/WorkEntryDialog";
 import { WorkTable } from "@/components/WorkTable";
 import { WordImportDialog } from "@/components/PDFImportWithTitleDialog";
 import { DatasetSelector } from "@/components/DatasetSelector";
-import { exportToPDF } from "@/lib/pdfExport";
+import { exportToXLSX } from "@/lib/xlsxExport";
 import { Download, Upload, Plus, Clock } from "lucide-react";
 import { toast } from "sonner";
 
@@ -128,12 +128,12 @@ export const Dashboard = () => {
     updateActiveDatasetEntries(entries.map(e => e.id === id ? { ...e, worked } : e));
   };
 
-  const handleExportPDF = () => {
+  const handleExportXLSX = () => {
     try {
-      exportToPDF(entries, activeDataset?.title);
-      toast.success("PDF exported successfully");
+      exportToXLSX(entries, activeDataset?.title);
+      toast.success("Excel file exported successfully");
     } catch (error) {
-      toast.error("Error exporting PDF");
+      toast.error("Error exporting Excel file");
       console.error("Export error:", error);
     }
   };
@@ -201,13 +201,13 @@ export const Dashboard = () => {
                 Import Word Doc
               </Button>
               <Button
-                onClick={handleExportPDF}
+                onClick={handleExportXLSX}
                 variant="outline"
                 className="gap-2"
                 disabled={entries.length === 0}
               >
                 <Download className="h-4 w-4" />
-                Export PDF
+                Export Excel
               </Button>
             </div>
           </div>
