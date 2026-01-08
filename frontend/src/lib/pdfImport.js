@@ -29,122 +29,91 @@ const parseTextToEntries = (text) => {
   const entries = [];
   const lines = text.split('\n').map(line => line.trim()).filter(line => line);
   
-  // Look for table headers to identify the structure
-  let headerIndex = -1;
-  let dateColIndex = -1;
-  let timeColIndex = -1;
-  let clientColIndex = -1;
+  // Pattern to match date formats like "Fri 2/1", "Mon 12/1", etc.
+  const datePattern = /(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+(\d{1,2})\/(\d{1,2})/i;
   
-  // Find header row and column positions
+  // Pattern to match time ranges like "09:00-11:00", "23:00-07:00"
+  const timePattern = /(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})/;
+  
+  // Keywords that indicate we're in the data section
+  const dataStartKeywords = ['Date', 'Time', 'Staff', 'Client'];
+  let inDataSection = false;
+  
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].toLowerCase();
-    if (line.includes('date') && (line.includes('time') || line.includes('client'))) {
-      headerIndex = i;
+    const line = lines[i];
+    
+    // Check if we've reached the data section
+    if (!inDataSection && dataStartKeywords.some(keyword => line.includes(keyword))) {
+      inDataSection = true;
+      continue;
+    }
+    
+    if (!inDataSection) continue;
+    
+    // Skip summary lines or page indicators
+    if (line.includes('Staff providing care') || 
+        line.includes('Page ') || 
+        line.includes('Total') ||
+        line.includes('Visits')) {
+      continue;
+    }
+    
+    // Try to find date and time in the line
+    const dateMatch = line.match(datePattern);
+    const timeMatch = line.match(timePattern);
+    
+    if (dateMatch && timeMatch) {
+      const dayOfWeek = dateMatch[1];
+      const day = parseInt(dateMatch[2]);
+      const month = parseInt(dateMatch[3]);
       
-      // Split the header line to find column positions
-      const headerParts = lines[i].split(/\s{2,}|\t/); // Split by multiple spaces or tabs
+      // Assume current year or next year if month is in the future
+      const currentDate = new Date();
+      let year = currentDate.getFullYear();
       
-      for (let j = 0; j < headerParts.length; j++) {
-        const header = headerParts[j].toLowerCase().trim();
-        if (header.includes('date')) {
-          dateColIndex = j;
-        } else if (header.includes('time')) {
-          timeColIndex = j;
-        } else if (header.includes('client') || header.includes('staff')) {
-          clientColIndex = j;
+      // If the month is less than current month, it might be next year
+      if (month < currentDate.getMonth() + 1 && currentDate.getMonth() > 6) {
+        year += 1;
+      }
+      
+      const date = new Date(year, month - 1, day);
+      if (isNaN(date.getTime())) continue;
+      
+      const startHour = parseInt(timeMatch[1]);
+      const startMin = timeMatch[2];
+      const endHour = parseInt(timeMatch[3]);
+      const endMin = timeMatch[4];
+      
+      const startTime = `${startHour.toString().padStart(2, '0')}:${startMin}`;
+      const endTime = `${endHour.toString().padStart(2, '0')}:${endMin}`;
+      
+      // Extract client name - look for names after the time
+      // Common pattern: "Larner, M" followed by client name
+      const afterTime = line.substring(line.indexOf(timeMatch[0]) + timeMatch[0].length);
+      const parts = afterTime.split(/\s{2,}/).filter(p => p.trim());
+      
+      // Usually: [Duration, Staff, Client, Activity]
+      // We want the Client which is typically the 3rd or 4th element
+      let client = '';
+      for (let part of parts) {
+        // Look for names with pattern "LastName, Initial" or just names
+        if (part.includes(',') || /[A-Z][a-z]+/.test(part)) {
+          // Skip if it's duration format (HH:MM)
+          if (!/^\d{1,2}:\d{2}$/.test(part) && !part.includes('Larner')) {
+            client = part;
+            break;
+          }
         }
       }
-      break;
-    }
-  }
-  
-  // If we found headers, parse the data rows
-  if (headerIndex >= 0) {
-    for (let i = headerIndex + 1; i < lines.length; i++) {
-      const line = lines[i];
-      if (!line) continue;
       
-      // Split the data line using the same method as headers
-      const dataParts = line.split(/\s{2,}|\t/).map(part => part.trim());
-      
-      if (dataParts.length < Math.max(dateColIndex, timeColIndex, clientColIndex) + 1) {
-        continue; // Skip if not enough columns
-      }
-      
-      // Extract date
-      const dateStr = dataParts[dateColIndex] || '';
-      const date = parseDateString(dateStr);
-      if (!date) continue;
-      
-      // Extract and split time (format: "start-finish")
-      const timeStr = dataParts[timeColIndex] || '';
-      const timeRange = parseTimeRange(timeStr);
-      if (!timeRange) continue;
-      
-      // Extract client
-      const client = dataParts[clientColIndex] || '';
-      
-      // Calculate total hours
-      const totalHours = calculateHours(timeRange.startTime, timeRange.finishTime);
+      const totalHours = calculateHours(startTime, endTime);
       
       entries.push({
         id: Date.now() + Math.random() + i,
-        date: date,
-        client: client,
-        startTime: timeRange.startTime,
-        finishTime: timeRange.finishTime,
-        totalHours: totalHours,
-        clientMiles: 0, // Default values since not specified in the new format
-        commuteMiles: 0,
-        worked: true, // Default to worked
-      });
-    }
-  } else {
-    // Fallback: try to parse each line individually
-    const dateRegex = /\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})\b/;
-    const timeRangeRegex = /(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?\s*-\s*(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/i;
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (!line) continue;
-      
-      const dateMatch = line.match(dateRegex);
-      const timeRangeMatch = line.match(timeRangeRegex);
-      
-      if (!dateMatch || !timeRangeMatch) continue;
-      
-      const date = parseDateString(dateMatch[1]);
-      if (!date) continue;
-      
-      const startTime = formatTimeFromMatch([
-        timeRangeMatch[0],
-        timeRangeMatch[1],
-        timeRangeMatch[2],
-        timeRangeMatch[3]
-      ]);
-      
-      const finishTime = formatTimeFromMatch([
-        timeRangeMatch[0],
-        timeRangeMatch[4],
-        timeRangeMatch[5],
-        timeRangeMatch[6]
-      ]);
-      
-      // Try to extract client name (text that's not date or time)
-      let client = line
-        .replace(dateMatch[0], '')
-        .replace(timeRangeMatch[0], '')
-        .replace(/\d+\.?\d*/g, '') // Remove numbers
-        .trim();
-      
-      const totalHours = calculateHours(startTime, finishTime);
-      
-      entries.push({
-        id: Date.now() + Math.random() + i,
-        date: date,
-        client: client,
+        date: date.toISOString().split('T')[0],
+        client: client || '',
         startTime: startTime,
-        finishTime: finishTime,
+        finishTime: endTime,
         totalHours: totalHours,
         clientMiles: 0,
         commuteMiles: 0,
@@ -156,72 +125,3 @@ const parseTextToEntries = (text) => {
   return entries;
 };
 
-// New function to parse time ranges in format "start-finish"
-const parseTimeRange = (timeStr) => {
-  if (!timeStr) return null;
-  
-  // Match patterns like "9:00-17:00", "9:00 AM - 5:00 PM", etc.
-  const timeRangeRegex = /(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?\s*-\s*(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/i;
-  const match = timeStr.match(timeRangeRegex);
-  
-  if (!match) return null;
-  
-  const startTime = formatTimeFromMatch([
-    match[0],
-    match[1],
-    match[2],
-    match[3]
-  ]);
-  
-  const finishTime = formatTimeFromMatch([
-    match[0],
-    match[4],
-    match[5],
-    match[6]
-  ]);
-  
-  return { startTime, finishTime };
-};
-
-const parseDateString = (dateStr) => {
-  const cleaned = dateStr.replace(/[\.]/g, '/');
-  const parts = cleaned.split(/[\/\-]/);
-  
-  if (parts.length !== 3) return null;
-
-  let month, day, year;
-  
-  if (parts[2].length === 4) {
-    month = parseInt(parts[0]);
-    day = parseInt(parts[1]);
-    year = parseInt(parts[2]);
-  } else {
-    month = parseInt(parts[0]);
-    day = parseInt(parts[1]);
-    year = parseInt(parts[2]);
-    if (year < 100) {
-      year += year < 50 ? 2000 : 1900;
-    }
-  }
-
-  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-
-  const date = new Date(year, month - 1, day);
-  if (isNaN(date.getTime())) return null;
-
-  return date.toISOString().split('T')[0];
-};
-
-const formatTimeFromMatch = (match) => {
-  let hours = parseInt(match[1]);
-  const minutes = match[2];
-  const ampm = match[3]?.toUpperCase();
-
-  if (ampm === 'PM' && hours !== 12) {
-    hours += 12;
-  } else if (ampm === 'AM' && hours === 12) {
-    hours = 0;
-  }
-
-  return `${hours.toString().padStart(2, '0')}:${minutes}`;
-};
