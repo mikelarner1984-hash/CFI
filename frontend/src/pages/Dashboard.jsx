@@ -7,6 +7,7 @@ import { WordImportDialog } from "@/components/PDFImportWithTitleDialog";
 import { DatasetSelector } from "@/components/DatasetSelector";
 import { exportToXLSX } from "@/lib/xlsxExport";
 import { calculateHours } from "@/lib/timeUtils";
+import { mergeIdenticalEntries } from "@/lib/mergeEntries";
 import { Download, Upload, Plus, Clock } from "lucide-react";
 import { toast } from "sonner";
 
@@ -23,9 +24,14 @@ export const Dashboard = () => {
     if (stored) {
       try {
         const parsedDatasets = JSON.parse(stored);
-        setDatasets(parsedDatasets);
-        if (parsedDatasets.length > 0) {
-          setActiveDatasetId(parsedDatasets[0].id);
+        // Merge entries in each dataset
+        const datasetsWithMerged = parsedDatasets.map(dataset => ({
+          ...dataset,
+          entries: mergeIdenticalEntries(dataset.entries)
+        }));
+        setDatasets(datasetsWithMerged);
+        if (datasetsWithMerged.length > 0) {
+          setActiveDatasetId(datasetsWithMerged[0].id);
         }
       } catch (e) {
         console.error("Error loading datasets:", e);
@@ -101,17 +107,19 @@ export const Dashboard = () => {
   };
 
   const handleAddEntry = (newEntry) => {
+    let updatedEntries;
     if (editingEntry) {
-      const updatedEntries = entries.map(e => 
-        e.id === editingEntry.id ? { ...newEntry, id: editingEntry.id } : e
-      );
-      updateActiveDatasetEntries(updatedEntries);
+      updatedEntries = entries.map(e => e.id === editingEntry.id ? { ...newEntry, id: editingEntry.id } : e);
       setEditingEntry(null);
       toast.success("Entry updated successfully");
     } else {
-      updateActiveDatasetEntries([...entries, { ...newEntry, id: Date.now() }]);
+      updatedEntries = [...entries, { ...newEntry, id: Date.now() }];
       toast.success("Entry added successfully");
     }
+    
+    // Merge entries with same date and client
+    const mergedEntries = mergeIdenticalEntries(updatedEntries);
+    updateActiveDatasetEntries(mergedEntries);
     setIsAddDialogOpen(false);
   };
 
@@ -155,12 +163,17 @@ export const Dashboard = () => {
       return entry;
     });
     
+    // Merge entries with same date and client
+    const mergedEntries = mergeIdenticalEntries(processedEntries);
+    
+    console.log(`After merge: ${processedEntries.length} entries -> ${mergedEntries.length} entries`);
+    
     // Create new dataset with imported entries
     const newDataset = {
       id: Date.now(),
       title: title,
       createdAt: new Date().toISOString(),
-      entries: processedEntries.map((entry, index) => ({
+      entries: mergedEntries.map((entry, index) => ({
         ...entry,
         id: Date.now() + index
       }))
@@ -169,7 +182,7 @@ export const Dashboard = () => {
     setDatasets([...datasets, newDataset]);
     setActiveDatasetId(newDataset.id);
     setIsWordImportOpen(false);
-    toast.success(`Created dataset "${title}" with ${importedEntries.length} entries`);
+    toast.success(`Created dataset "${title}" with ${mergedEntries.length} entries (merged from ${importedEntries.length})`);
   };
 
   const totals = useMemo(() => {
