@@ -48,7 +48,7 @@ export const WorkTable = ({ entries, onEdit, onDelete, onToggleWorked }) => {
             </Button>
           );
         },
-        cell: ({ row }) => format(new Date(row.getValue("date")), "MMM dd, yyyy"),
+        cell: ({ row }) => format(new Date(row.getValue("date")), "dd MMM"),
         filterFn: (row, id, value) => {
           return row.getValue(id)?.toLowerCase().includes(value.toLowerCase());
         },
