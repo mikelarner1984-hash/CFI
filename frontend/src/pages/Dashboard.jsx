@@ -139,12 +139,27 @@ export const Dashboard = () => {
   };
 
   const handleImportWord = (importedEntries, title) => {
+    // Post-process imported entries: check each entry and adjust next entry if needed
+    const processedEntries = importedEntries.map((entry, index) => {
+      // If the next entry has start time 07:00, adjust it to 08:00
+      if (index < importedEntries.length - 1) {
+        const nextEntry = importedEntries[index + 1];
+        if (nextEntry.startTime === '07:00') {
+          console.log(`Adjusting next entry (index ${index + 1}) start time from 07:00 to 08:00`);
+          nextEntry.startTime = '08:00';
+          // Recalculate total hours
+          nextEntry.totalHours = calculateHours(nextEntry.startTime, nextEntry.finishTime);
+        }
+      }
+      return entry;
+    });
+    
     // Create new dataset with imported entries
     const newDataset = {
       id: Date.now(),
       title: title,
       createdAt: new Date().toISOString(),
-      entries: importedEntries.map((entry, index) => ({
+      entries: processedEntries.map((entry, index) => ({
         ...entry,
         id: Date.now() + index
       }))

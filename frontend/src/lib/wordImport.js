@@ -1,6 +1,24 @@
 import mammoth from 'mammoth';
 import { calculateHours } from './timeUtils';
 
+// Helper function to recalculate hours
+const calculateHours = (startTime, finishTime) => {
+  if (!startTime || !finishTime) return 0;
+
+  const [startHour, startMinute] = startTime.split(':').map(Number);
+  const [finishHour, finishMinute] = finishTime.split(':').map(Number);
+
+  let startMinutes = startHour * 60 + startMinute;
+  let finishMinutes = finishHour * 60 + finishMinute;
+
+  if (finishMinutes < startMinutes) {
+    finishMinutes += 24 * 60;
+  }
+
+  const diffMinutes = finishMinutes - startMinutes;
+  return diffMinutes / 60;
+};
+
 export const importFromWord = async (file) => {
   try {
     console.log('Starting Word document import...', file.name);
@@ -221,5 +239,26 @@ const parseTextToEntries = (text) => {
   }
   
   console.log(`\n✅✅✅ Total entries created: ${entries.length} ✅✅✅`);
+  
+  // Post-process: Check each entry and if the next entry has start time 07:00, adjust it to 08:00
+  for (let i = 0; i < entries.length - 1; i++) {
+    const currentEntry = entries[i];
+    const nextEntry = entries[i + 1];
+    
+    if (nextEntry.startTime === '07:00') {
+      console.log(`\n--- Post-processing: Adjusting next entry's start time ---`);
+      console.log(`Current entry ${i}: ${currentEntry.date} ${currentEntry.startTime}-${currentEntry.finishTime}`);
+      console.log(`Next entry ${i + 1}: ${nextEntry.date} ${nextEntry.startTime}-${nextEntry.finishTime}`);
+      console.log(`Adjusting next entry's start time from 07:00 to 08:00`);
+      
+      nextEntry.startTime = '08:00';
+      // Recalculate total hours with new start time
+      nextEntry.totalHours = calculateHours(nextEntry.startTime, nextEntry.finishTime);
+      
+      console.log(`Next entry updated: ${nextEntry.date} ${nextEntry.startTime}-${nextEntry.finishTime}, Total Hours: ${nextEntry.totalHours}`);
+    }
+  }
+  
+  console.log(`\n✅ Post-processing complete. Final entry count: ${entries.length}`);
   return entries;
 };
