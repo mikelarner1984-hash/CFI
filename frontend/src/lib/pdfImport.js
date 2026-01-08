@@ -10,70 +10,93 @@ export const importFromPDF = async (file) => {
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     
     let allText = '';
+    let allItems = [];
     
+    // Extract text with positioning information
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
+      
+      // Get text items with their positions
+      textContent.items.forEach(item => {
+        allItems.push({
+          text: item.str,
+          x: item.transform[4],
+          y: item.transform[5]
+        });
+      });
+      
+      // Also keep simple text for pattern matching
       const pageText = textContent.items.map(item => item.str).join(' ');
       allText += pageText + '\n';
     }
 
-    const entries = parseTextToEntries(allText);
+    console.log('PDF Text Extracted:', allText.substring(0, 500)); // Debug log
+    
+    const entries = parseTextToEntries(allText, allItems);
+    
+    if (entries.length === 0) {
+      console.error('No entries parsed from text');
+      throw new Error('No valid entries found in PDF');
+    }
+    
+    console.log(`Parsed ${entries.length} entries from PDF`);
     return entries;
   } catch (error) {
     console.error('PDF import error:', error);
-    throw new Error('Failed to parse PDF. Please ensure it contains a valid table.');
+    throw new Error('Failed to parse PDF. Please ensure it contains a valid table with Date, Time, and Client columns.');
   }
 };
 
-const parseTextToEntries = (text) => {
+const parseTextToEntries = (text, items) => {
   const entries = [];
-  const lines = text.split('\n').map(line => line.trim()).filter(line => line);
   
-  // Pattern to match date formats like "Fri 2/1", "Mon 12/1", etc.
-  const datePattern = /(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+(\d{1,2})\/(\d{1,2})/i;
+  // More flexible patterns
+  // Date pattern: "Fri 2/1", "Mon 12/1", etc.
+  const datePattern = /(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s*(\d{1,2})\s*\/\s*(\d{1,2})/gi;
   
-  // Pattern to match time ranges like "09:00-11:00", "23:00-07:00"
-  const timePattern = /(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})/;
+  // Time pattern: "09:00-11:00", "9:00 - 11:00", etc.
+  const timePattern = /(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/g;
   
-  // Keywords that indicate we're in the data section
-  const dataStartKeywords = ['Date', 'Time', 'Staff', 'Client'];
-  let inDataSection = false;
+  const lines = text.split('\n');
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     
-    // Check if we've reached the data section
-    if (!inDataSection && dataStartKeywords.some(keyword => line.includes(keyword))) {
-      inDataSection = true;
-      continue;
-    }
-    
-    if (!inDataSection) continue;
-    
-    // Skip summary lines or page indicators
-    if (line.includes('Staff providing care') || 
-        line.includes('Page ') || 
-        line.includes('Total') ||
+    // Skip empty lines and headers
+    if (!line.trim() || 
+        line.includes('Care Horizons') || 
+        line.includes('Staff Work Schedule') ||
+        line.includes('Coordinator') ||
+        line.includes('Date Time Dur') ||
+        line.includes('Staff providing care') ||
+        line.includes('Page ') ||
         line.includes('Visits')) {
       continue;
     }
     
-    // Try to find date and time in the line
-    const dateMatch = line.match(datePattern);
-    const timeMatch = line.match(timePattern);
+    // Reset regex indices
+    datePattern.lastIndex = 0;
+    timePattern.lastIndex = 0;
+    
+    const dateMatch = datePattern.exec(line);
+    const timeMatch = timePattern.exec(line);
     
     if (dateMatch && timeMatch) {
       const dayOfWeek = dateMatch[1];
       const day = parseInt(dateMatch[2]);
       const month = parseInt(dateMatch[3]);
       
-      // Assume current year or next year if month is in the future
+      // Determine year - assume current or next year
       const currentDate = new Date();
       let year = currentDate.getFullYear();
       
-      // If the month is less than current month, it might be next year
-      if (month < currentDate.getMonth() + 1 && currentDate.getMonth() > 6) {
+      // If month is January and we're in December, it's next year
+      if (month === 1 && currentDate.getMonth() === 11) {
+        year += 1;
+      }
+      // If month seems in the past by more than 6 months, assume next year
+      else if (month < currentDate.getMonth() - 5) {
         year += 1;
       }
       
@@ -88,22 +111,40 @@ const parseTextToEntries = (text) => {
       const startTime = `${startHour.toString().padStart(2, '0')}:${startMin}`;
       const endTime = `${endHour.toString().padStart(2, '0')}:${endMin}`;
       
-      // Extract client name - look for names after the time
-      // Common pattern: "Larner, M" followed by client name
-      const afterTime = line.substring(line.indexOf(timeMatch[0]) + timeMatch[0].length);
-      const parts = afterTime.split(/\s{2,}/).filter(p => p.trim());
+      // Try to extract client name
+      // Look for text between time and common staff indicators
+      const afterTimeIndex = line.indexOf(timeMatch[0]) + timeMatch[0].length;
+      const afterTime = line.substring(afterTimeIndex);
       
-      // Usually: [Duration, Staff, Client, Activity]
-      // We want the Client which is typically the 3rd or 4th element
+      // Split by multiple spaces or tabs
+      const parts = afterTime.split(/\s{2,}|\t/).map(p => p.trim()).filter(p => p);
+      
+      // Look for client name - typically in format "LastName, Initial"
       let client = '';
       for (let part of parts) {
-        // Look for names with pattern "LastName, Initial" or just names
-        if (part.includes(',') || /[A-Z][a-z]+/.test(part)) {
-          // Skip if it's duration format (HH:MM)
-          if (!/^\d{1,2}:\d{2}$/.test(part) && !part.includes('Larner')) {
+        // Skip duration (HH:MM format)
+        if (/^\d{1,2}:\d{2}$/.test(part)) continue;
+        
+        // Skip staff name containing "Larner"
+        if (part.includes('Larner')) continue;
+        
+        // If it looks like a name (has comma or capital letters)
+        if (part.includes(',') || /[A-Z]/.test(part)) {
+          // Skip activity names
+          if (!part.includes('Day Support') && 
+              !part.includes('Supported Living') && 
+              !part.includes('Sleep In')) {
             client = part;
             break;
           }
+        }
+      }
+      
+      // Fallback: try to find pattern like "Argo, B" or "Preece, D"
+      if (!client) {
+        const nameMatch = line.match(/([A-Z][a-z]+,\s*[A-Z]+)/);
+        if (nameMatch && !nameMatch[1].includes('Larner')) {
+          client = nameMatch[1];
         }
       }
       
@@ -123,6 +164,7 @@ const parseTextToEntries = (text) => {
     }
   }
   
+  console.log('Entries found:', entries.length);
   return entries;
 };
 
