@@ -91,6 +91,15 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
       console.log('  New finish time:', adjustedFinishTime);
     }
     
+    // If finish time is 22:59, move it forward 1 hour to 23:59
+    if (formData.finishTime === '22:59') {
+      adjustedFinishTime = '23:59';
+      
+      console.log('Adjusted 22:59 finish time:');
+      console.log('  Original finish time:', formData.finishTime);
+      console.log('  New finish time:', adjustedFinishTime);
+    }
+    
     const entry = {
       date: adjustedDate,
       client: formData.client,
@@ -200,6 +209,19 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
                   <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Finish Time Auto-adjustment</p>
                   <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
                     Finish time will be changed to 08:00 when saved.
+                  </p>
+                </div>
+              </div>
+            )}
+            {formData.finishTime === '22:59' && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 flex items-start gap-2">
+                <svg className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Finish Time Auto-adjustment</p>
+                  <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                    Finish time will be changed to 23:59 when saved.
                   </p>
                 </div>
               </div>

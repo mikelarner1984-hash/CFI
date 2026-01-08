@@ -1,24 +1,6 @@
 import mammoth from 'mammoth';
 import { calculateHours } from './timeUtils';
 
-// Helper function to recalculate hours
-const calculateHours = (startTime, finishTime) => {
-  if (!startTime || !finishTime) return 0;
-
-  const [startHour, startMinute] = startTime.split(':').map(Number);
-  const [finishHour, finishMinute] = finishTime.split(':').map(Number);
-
-  let startMinutes = startHour * 60 + startMinute;
-  let finishMinutes = finishHour * 60 + finishMinute;
-
-  if (finishMinutes < startMinutes) {
-    finishMinutes += 24 * 60;
-  }
-
-  const diffMinutes = finishMinutes - startMinutes;
-  return diffMinutes / 60;
-};
-
 export const importFromWord = async (file) => {
   try {
     console.log('Starting Word document import...', file.name);
@@ -151,6 +133,13 @@ const parseTextToEntries = (text) => {
     if (endTime === '07:00') {
       console.log('Adjusting 07:00 finish time to 08:00');
       endTime = '08:00';
+      console.log('New finish time:', endTime);
+    }
+    
+    // If finish time is 22:59, adjust to 23:59
+    if (endTime === '22:59') {
+      console.log('Adjusting 22:59 finish time to 23:59');
+      endTime = '23:59';
       console.log('New finish time:', endTime);
     }
     

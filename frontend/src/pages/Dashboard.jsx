@@ -6,6 +6,7 @@ import { WorkTable } from "@/components/WorkTable";
 import { WordImportDialog } from "@/components/PDFImportWithTitleDialog";
 import { DatasetSelector } from "@/components/DatasetSelector";
 import { exportToXLSX } from "@/lib/xlsxExport";
+import { calculateHours } from "@/lib/timeUtils";
 import { Download, Upload, Plus, Clock } from "lucide-react";
 import { toast } from "sonner";
 
