@@ -118,7 +118,7 @@ const parseTextToEntries = (text) => {
     const endMin = timeMatch[4];
     
     let startTime = `${startHour.toString().padStart(2, '0')}:${startMin}`;
-    const endTime = `${endHour.toString().padStart(2, '0')}:${endMin}`;
+    let endTime = `${endHour.toString().padStart(2, '0')}:${endMin}`;
     
     // If start time is 23:00, adjust to 00:00 and move date forward 1 day
     if (startTime === '23:00') {
@@ -127,6 +127,13 @@ const parseTextToEntries = (text) => {
       date.setDate(date.getDate() + 1);
       console.log('New date:', date.toISOString().split('T')[0]);
       console.log('New start time:', startTime);
+    }
+    
+    // If finish time is 07:00, adjust to 08:00
+    if (endTime === '07:00') {
+      console.log('Adjusting 07:00 finish time to 08:00');
+      endTime = '08:00';
+      console.log('New finish time:', endTime);
     }
     
     console.log('Times:', startTime, '-', endTime);

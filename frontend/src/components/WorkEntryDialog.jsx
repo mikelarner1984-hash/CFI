@@ -64,6 +64,7 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
     
     let adjustedDate = formData.date;
     let adjustedStartTime = formData.startTime;
+    let adjustedFinishTime = formData.finishTime;
     
     // If start time is 23:00, move it forward 1 hour to 00:00 and add 1 day to date
     if (formData.startTime === '23:00') {
@@ -81,12 +82,21 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
       console.log('  New start time:', adjustedStartTime);
     }
     
+    // If finish time is 07:00, move it forward 1 hour to 08:00
+    if (formData.finishTime === '07:00') {
+      adjustedFinishTime = '08:00';
+      
+      console.log('Adjusted 07:00 finish time:');
+      console.log('  Original finish time:', formData.finishTime);
+      console.log('  New finish time:', adjustedFinishTime);
+    }
+    
     const entry = {
       date: adjustedDate,
       client: formData.client,
       startTime: adjustedStartTime,
-      finishTime: formData.finishTime,
-      totalHours: calculateHours(adjustedStartTime, formData.finishTime),
+      finishTime: adjustedFinishTime,
+      totalHours: calculateHours(adjustedStartTime, adjustedFinishTime),
       clientMiles: parseFloat(formData.clientMiles) || 0,
       commuteMiles: parseFloat(formData.commuteMiles) || 0,
       worked: formData.worked,
@@ -174,9 +184,22 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Auto-adjustment will occur</p>
+                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Start Time Auto-adjustment</p>
                   <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
                     Start time will be changed to 00:00 and date will move to the next day when saved.
+                  </p>
+                </div>
+              </div>
+            )}
+            {formData.finishTime === '07:00' && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 flex items-start gap-2">
+                <svg className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Finish Time Auto-adjustment</p>
+                  <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                    Finish time will be changed to 08:00 when saved.
                   </p>
                 </div>
               </div>
