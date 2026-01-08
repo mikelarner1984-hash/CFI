@@ -1,11 +1,8 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import { calculateHours } from './timeUtils';
 
-// Use local worker instead of CDN
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.js',
-  import.meta.url
-).toString();
+// Use local worker from public directory
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 export const importFromPDF = async (file) => {
   try {
