@@ -12,7 +12,12 @@ export const calculateHours = (startTime, finishTime) => {
   }
 
   const diffMinutes = finishMinutes - startMinutes;
-  return diffMinutes / 60;
+  const hours = diffMinutes / 60;
+  
+  // Round up to the nearest 0.05
+  const roundedHours = Math.ceil(hours / 0.05) * 0.05;
+  
+  return roundedHours;
 };
 
 export const formatTime = (time) => {
