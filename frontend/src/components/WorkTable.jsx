@@ -35,6 +35,19 @@ export const WorkTable = ({ entries, onEdit, onDelete, onToggleWorked }) => {
   const columns = useMemo(
     () => [
       {
+        accessorKey: "worked",
+        header: "CH Submitted",
+        cell: ({ row }) => {
+          const entry = row.original;
+          return (
+            <Switch
+              checked={entry.worked !== undefined ? entry.worked : true}
+              onCheckedChange={(checked) => onToggleWorked(entry.id, checked)}
+            />
+          );
+        },
+      },
+      {
         accessorKey: "date",
         header: ({ column }) => {
           return (
@@ -137,19 +150,6 @@ export const WorkTable = ({ entries, onEdit, onDelete, onToggleWorked }) => {
         cell: ({ row }) => {
           const miles = parseFloat(row.getValue("commuteMiles"));
           return <div>{miles.toFixed(1)}</div>;
-        },
-      },
-      {
-        accessorKey: "worked",
-        header: "CH Submitted",
-        cell: ({ row }) => {
-          const entry = row.original;
-          return (
-            <Switch
-              checked={entry.worked !== undefined ? entry.worked : true}
-              onCheckedChange={(checked) => onToggleWorked(entry.id, checked)}
-            />
-          );
         },
       },
       {
@@ -278,7 +278,8 @@ export const WorkTable = ({ entries, onEdit, onDelete, onToggleWorked }) => {
           {table.getRowModel().rows?.length > 0 && (
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={4} className="font-semibold">
+                <TableCell></TableCell>
+                <TableCell colSpan={3} className="font-semibold">
                   Totals (CH Submitted Only)
                 </TableCell>
                 <TableCell className="font-semibold">
@@ -290,7 +291,6 @@ export const WorkTable = ({ entries, onEdit, onDelete, onToggleWorked }) => {
                 <TableCell className="font-semibold">
                   {totals.commuteMiles.toFixed(1)}
                 </TableCell>
-                <TableCell></TableCell>
                 <TableCell></TableCell>
               </TableRow>
             </TableFooter>

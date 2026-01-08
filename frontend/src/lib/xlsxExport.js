@@ -7,6 +7,7 @@ export const exportToXLSX = (entries, datasetTitle = 'Work Tracker') => {
     
     // Prepare the data rows
     const data = entries.map(entry => ({
+      'CH Submitted': entry.worked !== false ? 'Yes' : 'No',
       'Date': format(new Date(entry.date), 'dd MMM'),
       'Client': entry.client || '-',
       'Start Time': entry.startTime || '-',
@@ -14,7 +15,6 @@ export const exportToXLSX = (entries, datasetTitle = 'Work Tracker') => {
       'Total Hours': (entry.totalHours || 0).toFixed(2),
       'Client Miles': (entry.clientMiles || 0).toFixed(1),
       'Commute Miles': (entry.commuteMiles || 0).toFixed(1),
-      'CH Submitted': entry.worked !== false ? 'Yes' : 'No',
     }));
 
     // Calculate totals (only for CH Submitted = Yes)
@@ -34,14 +34,14 @@ export const exportToXLSX = (entries, datasetTitle = 'Work Tracker') => {
 
     // Add totals row
     data.push({
+      'CH Submitted': '',
       'Date': '',
       'Client': '',
-      'Start Time': '',
-      'Finish Time': 'Totals (CH Submitted):',
+      'Start Time': 'Totals (CH Submitted):',
+      'Finish Time': '',
       'Total Hours': totals.totalHours.toFixed(2),
       'Client Miles': totals.clientMiles.toFixed(1),
       'Commute Miles': totals.commuteMiles.toFixed(1),
-      'CH Submitted': '',
     });
 
     console.log('Data prepared:', data.length, 'rows');
@@ -51,6 +51,7 @@ export const exportToXLSX = (entries, datasetTitle = 'Work Tracker') => {
 
     // Set column widths
     worksheet['!cols'] = [
+      { wch: 14 },  // CH Submitted
       { wch: 12 },  // Date
       { wch: 20 },  // Client
       { wch: 12 },  // Start Time
@@ -58,7 +59,6 @@ export const exportToXLSX = (entries, datasetTitle = 'Work Tracker') => {
       { wch: 12 },  // Total Hours
       { wch: 14 },  // Client Miles
       { wch: 14 },  // Commute Miles
-      { wch: 14 },  // CH Submitted
     ];
 
     // Create workbook
