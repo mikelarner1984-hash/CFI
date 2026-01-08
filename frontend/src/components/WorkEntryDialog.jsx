@@ -62,12 +62,31 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    let adjustedDate = formData.date;
+    let adjustedStartTime = formData.startTime;
+    
+    // If start time is 23:00, move it forward 1 hour to 00:00 and add 1 day to date
+    if (formData.startTime === '23:00') {
+      adjustedStartTime = '00:00';
+      
+      // Add 1 day to the date
+      const currentDate = new Date(formData.date);
+      currentDate.setDate(currentDate.getDate() + 1);
+      adjustedDate = currentDate.toISOString().split('T')[0];
+      
+      console.log('Adjusted 23:00 start time:');
+      console.log('  Original date:', formData.date);
+      console.log('  New date:', adjustedDate);
+      console.log('  Original start time:', formData.startTime);
+      console.log('  New start time:', adjustedStartTime);
+    }
+    
     const entry = {
-      date: formData.date,
+      date: adjustedDate,
       client: formData.client,
-      startTime: formData.startTime,
+      startTime: adjustedStartTime,
       finishTime: formData.finishTime,
-      totalHours: calculatedHours,
+      totalHours: calculateHours(adjustedStartTime, formData.finishTime),
       clientMiles: parseFloat(formData.clientMiles) || 0,
       commuteMiles: parseFloat(formData.commuteMiles) || 0,
       worked: formData.worked,
@@ -147,6 +166,19 @@ export const WorkEntryDialog = ({ open, onOpenChange, onSave, editingEntry }) =>
                 <span className="text-sm font-medium">
                   Total Hours: <span className="text-primary">{calculatedHours.toFixed(2)}</span>
                 </span>
+              </div>
+            )}
+            {formData.startTime === '23:00' && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 flex items-start gap-2">
+                <svg className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Auto-adjustment will occur</p>
+                  <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                    Start time will be changed to 00:00 and date will move to the next day when saved.
+                  </p>
+                </div>
               </div>
             )}
             <div className="grid grid-cols-2 gap-4">

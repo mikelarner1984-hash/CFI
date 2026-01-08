@@ -105,20 +105,29 @@ const parseTextToEntries = (text) => {
       year += 1;
     }
     
-    const date = new Date(year, month - 1, day);
+    let date = new Date(year, month - 1, day);
     if (isNaN(date.getTime())) {
       console.log('Invalid date');
       continue;
     }
     
     // Parse times
-    const startHour = parseInt(timeMatch[1]);
+    let startHour = parseInt(timeMatch[1]);
     const startMin = timeMatch[2];
     const endHour = parseInt(timeMatch[3]);
     const endMin = timeMatch[4];
     
-    const startTime = `${startHour.toString().padStart(2, '0')}:${startMin}`;
+    let startTime = `${startHour.toString().padStart(2, '0')}:${startMin}`;
     const endTime = `${endHour.toString().padStart(2, '0')}:${endMin}`;
+    
+    // If start time is 23:00, adjust to 00:00 and move date forward 1 day
+    if (startTime === '23:00') {
+      console.log('Adjusting 23:00 start time to next day');
+      startTime = '00:00';
+      date.setDate(date.getDate() + 1);
+      console.log('New date:', date.toISOString().split('T')[0]);
+      console.log('New start time:', startTime);
+    }
     
     console.log('Times:', startTime, '-', endTime);
     
