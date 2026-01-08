@@ -213,6 +213,66 @@ frontend:
         agent: "testing"
         comment: "UPDATED: PDF import functionality modified to handle new format - Date column maps to date field, Time column (start-finish format) splits into start/finish times, Client (other staff) column maps to client field. Miles fields default to 0. Dialog updated with new format description."
 
+  - task: "Dataset Management System"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/DatasetSelector.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "PASSED: Complete dataset management system working correctly. Default dataset creation on first load ✅, Dataset selector visible below header ✅, Manual dataset creation ✅, Independent data per dataset ✅, Dataset switching ✅, Entry counts display ✅, Active dataset name in card description ✅."
+
+  - task: "Dataset Creation and Switching"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/Dashboard.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "PASSED: Dataset creation via 'New Dataset' button works correctly. Dataset switching maintains independent data and totals. Verified with test datasets 'February 2024 - Manual Entries' and 'Default Dataset' showing different totals (8.00 vs 0.00 hours)."
+
+  - task: "PDF Import with Dataset Title"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/PDFImportWithTitleDialog.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "PASSED: PDF import dialog requires both dataset title and PDF file selection. Instructions clearly mention creating a new dataset. Title field is required and auto-populates from filename. Dialog shows expected PDF format with detailed instructions."
+
+  - task: "Dataset Deletion and Error Handling"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/DatasetSelector.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "PASSED: Dataset deletion available through three-dot menu when multiple datasets exist. App automatically switches to another dataset after deletion. Error handling prevents deletion of last remaining dataset with appropriate error message."
+
+  - task: "Data Persistence Across Datasets"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/Dashboard.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "PASSED: All datasets and their entries persist correctly across page refreshes using localStorage. Created test dataset 'Persistence Test Dataset' with entry for 'Test Client' - both dataset and entry remained after page refresh. Last active dataset is correctly restored."
+
   - task: "PDF Export Functionality"
     implemented: true
     working: true
