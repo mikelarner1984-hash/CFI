@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 
-export const exportToICS = (entries, datasetTitle = 'Work Tracker') => {
+export const exportToICS = (entries, datasetTitle = 'Care Work') => {
   try {
     console.log('Starting ICS export...', entries.length, 'entries');
     
@@ -12,7 +12,7 @@ export const exportToICS = (entries, datasetTitle = 'Work Tracker') => {
     let icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//CFI Group//Work Tracker//EN',
+      'PRODID:-//CFI Group//Care Work//EN',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
       `X-WR-CALNAME:${datasetTitle}`,

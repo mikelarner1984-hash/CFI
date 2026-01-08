@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 
-export const exportToXLSX = (entries, datasetTitle = 'Work Tracker') => {
+export const exportToXLSX = (entries, datasetTitle = 'Care Work') => {
   try {
     console.log('Starting XLSX export...', entries.length, 'entries');
     

@@ -1,15 +1,14 @@
 /* eslint-disable no-restricted-globals */
 
-const CACHE_NAME = 'work-tracker-v1';
+const CACHE_NAME = 'care-work-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/static/css/main.css',
-  '/static/js/bundle.js',
-  '/static/js/main.chunk.js',
-  '/static/js/vendors~main.chunk.js',
   '/cfi-logo.png',
-  '/manifest.json'
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png'
 ];
 
 // Install event - cache resources

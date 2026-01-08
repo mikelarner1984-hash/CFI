@@ -196,7 +196,7 @@ export const Dashboard = () => {
                 className="h-16 w-auto object-contain"
               />
               <div className="border-l pl-4">
-                <h1 className="text-3xl font-semibold text-foreground">Work Tracker</h1>
+                <h1 className="text-3xl font-semibold text-foreground">Care Work</h1>
                 <p className="text-muted-foreground mt-1">Track your work hours and mileage</p>
               </div>
             </div>
